@@ -129,6 +129,45 @@ This template supports all AIP-62 compatible wallets:
 
 The template includes a custom wallet selection modal built with shadcn/ui components, giving you full control over the design and user experience without being tied to specific UI frameworks.
 
+## 🔐 Privy Integration
+
+This template includes optional Privy integration for social authentication and automatic Movement Network wallet creation. Privy enables users to authenticate using social logins (Google, Twitter, GitHub, Discord, Email) and automatically creates Movement Network wallets for seamless onboarding.
+
+### Features
+
+- **Social Authentication**: Login with popular social providers
+- **Automatic Wallet Creation**: Movement Network wallets created automatically upon authentication
+- **Seamless User Experience**: No need for users to install browser extensions
+- **Cross-Platform Support**: Works on mobile and desktop devices
+- **Secure Key Management**: Private keys managed securely by Privy infrastructure
+
+### Setup
+
+To enable Privy integration, add the following environment variables to your `.env.local` file:
+
+```env
+# Privy Integration (Optional)
+NEXT_PUBLIC_PRIVY_KEY=your_privy_public_key
+NEXT_PUBLIC_SECRET=your_privy_api_secret
+NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id
+```
+
+### Getting Started with Privy
+
+1. **Create a Privy Account**: Visit [Privy Console](https://console.privy.io/) and create an account
+2. **Create a New App**: Set up a new application in the Privy dashboard
+3. **Configure Settings**: Enable Movement Network support in your app settings
+4. **Get API Keys**: Copy your App ID, Public Key, and API Secret
+5. **Add Environment Variables**: Add the keys to your `.env.local` file
+6. **Deploy**: Your app now supports social authentication with automatic wallet creation
+
+### Benefits
+
+- **Improved Onboarding**: Users can start interacting with your dApp immediately
+- **Higher Conversion**: No wallet installation barriers for new users
+- **Better UX**: Familiar social login experience
+- **Mobile Friendly**: Works seamlessly on mobile devices without browser wallet extensions
+
 ## 🌐 Network Management
 
 ### Switching Networks

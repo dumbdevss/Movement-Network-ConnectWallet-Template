@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { usePrivy, useLogin } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +13,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getAptosWallets } from "@aptos-labs/wallet-standard";
+import { Separator } from "@/components/ui/separator";
+import { createMovementWallet } from "@/lib/privy-movement";
+import Image from "next/image";
 
 interface WalletSelectionModalProps {
   children: React.ReactNode;
@@ -19,7 +23,14 @@ interface WalletSelectionModalProps {
 
 export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
   const [open, setOpen] = useState(false);
+  const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const { wallets, connect } = useWallet();
+  const { ready, authenticated, user } = usePrivy();
+
+  // Check for Movement wallet
+  const movementWallet: any = user?.linkedAccounts?.find(
+    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
+  );
 
   // Filter out unwanted wallets, remove duplicates, and sort with Nightly first
   const filteredWallets = wallets
@@ -78,6 +89,67 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
     }
   };
 
+  const handleWalletCreation = async (user: any) => {
+    try {
+      setIsCreatingWallet(true);
+      console.log('Creating Movement wallet for user:', user);
+      
+      // Create Movement wallet using API
+      const movementWallet = await createMovementWallet(user);
+      console.log('Movement wallet ready:', movementWallet);
+      
+      setOpen(false);
+      return movementWallet;
+    } catch (error) {
+      console.error('Wallet creation error:', error);
+    } finally {
+      setIsCreatingWallet(false);
+    }
+  };
+
+  const { login } = useLogin({
+    onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount }) => {
+      console.log('User logged in successfully:', user);
+      console.log('Is new user:', isNewUser);
+      console.log('Was already authenticated:', wasAlreadyAuthenticated);
+      console.log('Login method:', loginMethod);
+      console.log('Login account:', loginAccount);
+      
+      try {
+        // Create wallet after successful login
+        await handleWalletCreation(user);
+      } catch (error) {
+        console.error('Error in login completion:', error);
+        setIsCreatingWallet(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Login failed:', error);
+      setIsCreatingWallet(false);
+    }
+  });
+
+  const handlePrivyLogin = async () => {
+    try {
+      setIsCreatingWallet(true);
+      
+      if (!authenticated) {
+        // Login with Privy - wallet creation will happen in onComplete callback
+        await login({ 
+          loginMethods: ['email', 'twitter', 'google', 'github', 'discord'], 
+          prefill: { type: 'email', value: '' }, 
+          disableSignup: false 
+        });
+      } else {
+        // User is already authenticated, just create wallet
+        await handleWalletCreation(user);
+      }
+    } catch (error) {
+      console.error('Privy login error:', error);
+      setIsCreatingWallet(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -90,32 +162,107 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
             Choose a wallet to connect to Movement Network
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          {filteredWallets.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              No compatible wallets detected. Please install a supported wallet.
-            </p>
-          ) : (
-            filteredWallets.map((wallet) => (
-              <Button
-                key={wallet.name}
-                variant="outline"
-                className="w-full justify-start h-12"
-                onClick={() => handleWalletSelect(wallet.name)}
-              >
-                <div className="flex items-center space-x-3">
-                  {wallet.icon && (
-                    <img 
-                      src={wallet.icon} 
-                      alt={wallet.name} 
-                      className="w-6 h-6"
-                    />
-                  )}
-                  <span>{wallet.name}</span>
+        <div className="space-y-4">
+          {/* Privy Social Login Option */}
+          <div className="space-y-3">
+            <div className="text-center mb-4">
+              <Image
+                src="/Privy_Symbol_White.png"
+                alt="Privy"
+                width={48}
+                height={48}
+                className="mx-auto mb-2 invert"
+              />
+              <h3 className="text-lg font-semibold">Connect with Privy</h3>
+              <p className="text-sm text-muted-foreground">
+                Secure social login with automatic wallet creation
+              </p>
+            </div>
+            
+            <Button
+              variant="default"
+              className="w-full justify-center h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+              onClick={handlePrivyLogin}
+              disabled={isCreatingWallet || !ready}
+            >
+              {isCreatingWallet ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Setting up wallet...</span>
                 </div>
-              </Button>
-            ))
-          )}
+              ) : authenticated ? (
+                <span>Setup Movement Wallet</span>
+              ) : (
+                <span>Login & Create Wallet</span>
+              )}
+            </Button>
+            
+            {authenticated && user && (
+              <div className="space-y-2">
+                {/* User Authentication Status */}
+                <div className="text-sm text-muted-foreground text-center bg-muted/50 p-3 rounded-lg">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Authenticated as: {user.email?.address || user.phone?.number || 'User'}</span>
+                  </div>
+                </div>
+                
+                {/* Movement Wallet Status */}
+                {movementWallet ? (
+                  <div className="text-sm text-center bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 p-3 rounded-lg">
+                    <div className="flex items-center justify-center space-x-2 mb-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="font-medium text-blue-700">Movement Wallet Connected</span>
+                    </div>
+                    <div className="text-xs text-blue-600 font-mono">
+                      {movementWallet.address?.slice(0, 6)}...{movementWallet.address?.slice(-4)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-center bg-orange-50 border border-orange-200 p-3 rounded-lg">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-orange-700">Movement Wallet Not Created</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator className="my-4" />
+          
+          {/* Traditional Wallet Options */}
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground text-center">
+              Or connect with a traditional wallet:
+            </p>
+            {filteredWallets.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No compatible wallets detected. Please install a supported wallet.
+              </p>
+            ) : (
+              filteredWallets.map((wallet) => (
+                <Button
+                  key={wallet.name}
+                  variant="outline"
+                  className="w-full justify-start h-12"
+                  onClick={() => handleWalletSelect(wallet.name)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {wallet.icon && (
+                      <img 
+                        src={wallet.icon} 
+                        alt={wallet.name} 
+                        className="w-6 h-6"
+                      />
+                    )}
+                    <span>{wallet.name}</span>
+                  </div>
+                </Button>
+              ))
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

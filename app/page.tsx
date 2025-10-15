@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { WalletDemoContent } from "@/components/wallet-demo-content";
 import { WalletSelectionModal } from "@/components/wallet-selection-modal";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { MovementWalletExample } from "@/examples/privy-movement-usage";
 
 export default function Home() {
   const { 
@@ -35,6 +36,8 @@ export default function Home() {
                 Connect Wallet
               </Button>
             </WalletSelectionModal>
+
+            <MovementWalletExample />
           </div>
         )}
       </main>

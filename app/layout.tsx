@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { WalletProvider } from "@/components/wallet-provider";
+import { PrivyClientProvider } from "@/components/privy_provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,8 +40,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <WalletProvider>
-            {children}
-            <Toaster />
+            <PrivyClientProvider>
+              {children}
+              <Toaster />
+            </PrivyClientProvider>
           </WalletProvider>
         </ThemeProvider>
       </body>
