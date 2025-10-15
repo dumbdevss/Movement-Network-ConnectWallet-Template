@@ -44,7 +44,7 @@ export async function createMovementWallet(privyUser: any) {
 
     // Create new wallet using Privy API with correct structure
     const url = 'https://api.privy.io/v1/wallets';
-    const appId = process.env.NEXT_PUBLIC_PRIVY_KEY;
+    const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
     const appSecret = process.env.NEXT_PUBLIC_SECRET;
     
     if (!appId || !appSecret) {
@@ -169,12 +169,12 @@ export async function signAndSubmitTransaction(
 export async function signWithPrivy(walletId: string, hash: string) {
   const url = `https://api.privy.io/v1/wallets/${walletId}/raw_sign`;
 
-  const auth_token = btoa(`${process.env.NEXT_PUBLIC_PRIVY_KEY}:${process.env.NEXT_PUBLIC_SECRET}`);
+  const auth_token = btoa(`${process.env.NEXT_PUBLIC_PRIVY_APP_ID}:${process.env.NEXT_PUBLIC_SECRET}`);
   
   const options = {
     method: 'POST',
     headers: {
-      'privy-app-id': process.env.NEXT_PUBLIC_PRIVY_KEY || '',
+      'privy-app-id': process.env.NEXT_PUBLIC_PRIVY_APP_ID || '',
       'Authorization': `Basic ${auth_token}`,
       'Content-Type': 'application/json'
     },
