@@ -197,8 +197,8 @@ export function MovementWalletExample() {
       ) : (
         <div className="space-y-2">
           <div className="p-3 bg-gray-100 rounded-lg">
-            <p className="text-sm font-medium">Wallet Address:</p>
-            <p className="text-xs font-mono break-all">{movementWallet.address}</p>
+            <p className="text-sm dark:text-black font-medium">Wallet Address:</p>
+            <p className="text-xs dark:text-black font-mono break-all">{movementWallet.address}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -232,11 +232,11 @@ export function MovementWalletExample() {
             {/* Balance Display */}
             {balance !== null && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-blue-800 mb-1">Wallet Balance</h3>
-                <p className="text-lg font-mono text-blue-700">
+                <h3 className="text-sm dark:text-white font-semibold text-blue-800 mb-1">Wallet Balance</h3>
+                <p className="text-lg font-mono dark:text-white text-blue-700">
                   {(balance / 100000000).toFixed(8)} MOVE
                 </p>
-                <p className="text-xs text-blue-600">
+                <p className="text-xs dark:text-white text-blue-600">
                   {balance.toLocaleString()} Octas
                 </p>
               </div>
@@ -245,11 +245,11 @@ export function MovementWalletExample() {
             {/* Account Info Display */}
             {accountInfo && (
               <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-purple-800 mb-2">Account Information</h3>
+                <h3 className="text-sm dark:text-white font-semibold text-purple-800 mb-2">Account Information</h3>
                 <div className="space-y-1 text-sm">
                   <div>
                     <span className="font-medium text-purple-700">Sequence Number:</span>
-                    <span className="ml-2 font-mono text-purple-600">{accountInfo.sequence_number}</span>
+                    <span className="ml-2 font-mono dark:text-white text-purple-600">{accountInfo.sequence_number}</span>
                   </div>
                   <div>
                     <span className="font-medium text-purple-700">Authentication Key:</span>
