@@ -118,6 +118,7 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
       try {
         // Create wallet after successful login
         await handleWalletCreation(user);
+        window.location.reload();
       } catch (error) {
         console.error('Error in login completion:', error);
         setIsCreatingWallet(false);
