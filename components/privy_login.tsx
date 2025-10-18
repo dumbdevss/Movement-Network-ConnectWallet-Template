@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePrivy, useLogin } from "@privy-io/react-auth";
+import { useCreateWallet } from "@privy-io/react-auth/extended-chains";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,11 +29,13 @@ interface PrivyLoginProps {
 
 export default function PrivyLogin({ isOpen, onClose, onSuccess }: PrivyLoginProps) {
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
+  const { createWallet } = useCreateWallet();
+
   const { ready, authenticated, user } = usePrivy();
 
   // Check for Movement wallet
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
+    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
   );
 
   const handleWalletCreation = async (user: any) => {
@@ -41,7 +44,7 @@ export default function PrivyLogin({ isOpen, onClose, onSuccess }: PrivyLoginPro
       console.log('Creating Movement wallet for user:', user);
 
       // Create Movement wallet using API
-      const movementWallet = await createMovementWallet(user);
+      const movementWallet = await createMovementWallet(user, createWallet);
       console.log('Movement wallet ready:', movementWallet);
 
       return movementWallet;

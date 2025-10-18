@@ -10,7 +10,6 @@ import {
 } from "@aptos-labs/ts-sdk";
 import { toHex } from "viem";
 import {
-  useCreateWallet,
   useSignRawHash,
 } from "@privy-io/react-auth/extended-chains";
 
@@ -20,7 +19,7 @@ const MOVEMENT_RPC_URL = process.env.NEXT_PUBLIC_MOVEMENT_RPC_URL || "https://fu
 // Initialize Aptos client for Movement Mainnet
 const aptos = new Aptos(
   new AptosConfig({
-    network: Network.TESTNET,
+    network: Network.CUSTOM,
     fullnode: MOVEMENT_RPC_URL,
   })
 );
@@ -28,12 +27,14 @@ const aptos = new Aptos(
 /**
  * Create a new Movement wallet using Privy API
  * This function should be called after user is authenticated with Privy
+ * @param privyUser - The authenticated Privy user
+ * @param createWallet - The createWallet function from useCreateWallet hook
  */
-export async function createMovementWallet(privyUser: any) {
+export async function createMovementWallet(privyUser: any, createWallet: any) {
   try {
     // First check if user already has a Movement wallet
     const existingWallet = privyUser.linkedAccounts?.find(
-      (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
+      (account: any) => account.type === 'wallet' && account.chainType === 'movement'
     );
     
     if (existingWallet) {
@@ -46,55 +47,14 @@ export async function createMovementWallet(privyUser: any) {
       };
     }
 
-    // Create new wallet using Privy API with correct structure
-    const url = 'https://api.privy.io/v1/wallets';
-    const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-    const appSecret = process.env.NEXT_PUBLIC_SECRET;
-    
-    if (!appId || !appSecret) {
-      throw new Error('Privy app credentials not configured. Please set NEXT_PUBLIC_PRIVY_APP_ID and NEXT_PUBLIC_PRIVY_APP_SECRET');
-    }
-
-    const encodedCredentials = btoa(`${appId}:${appSecret}`);
-    
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${encodedCredentials}`,
-        'privy-app-id': appId,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        chain_type: 'movement',
-        owner: {
-          user_id: privyUser.id
-        }
-      })
-    };
-
     console.log('Creating Movement wallet for user:', privyUser.id);
-    const response = await fetch(url, options);
+    const wallet = await createWallet({
+      chainType: 'movement',
+    });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
-      }
-      throw new Error(`Privy API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
-    }
+    console.log('Movement wallet created successfully:', wallet);
     
-    const walletData = await response.json();
-    console.log('Movement wallet created successfully:', walletData);
-    
-    return {
-      id: walletData.id,
-      address: walletData.address,
-      public_key: walletData.public_key,
-      chain_type: walletData.chain_type
-    };
+    return wallet;
   } catch (error) {
     console.error('Error creating Movement wallet:', error);
     throw error;
@@ -199,13 +159,16 @@ export function useSignWithPrivy() {
   const { signRawHash } = useSignRawHash();
 
   const signHash = async (walletAddress: string, hash: any) => {
+
+    console.log('Signing hash:', hash);
+    console.log('Wallet address:', walletAddress);
+
     try {
       const { signature: rawSignature } = await signRawHash({
         address: walletAddress,
         chainType: "movement",
         hash: toHex(hash),
       });
-
       console.log('Signature received:', rawSignature);
       return {
         data: {

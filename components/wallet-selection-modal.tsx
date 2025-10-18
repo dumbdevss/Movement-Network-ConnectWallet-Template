@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { usePrivy, useLogin } from "@privy-io/react-auth";
+import { useCreateWallet } from "@privy-io/react-auth/extended-chains";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,10 +27,11 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const { wallets, connect } = useWallet();
   const { ready, authenticated, user } = usePrivy();
+  const { createWallet } = useCreateWallet();
 
   // Check for Movement wallet
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
+    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
   );
 
   // Filter out unwanted wallets, remove duplicates, and sort with Nightly first
@@ -95,7 +97,7 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
       console.log('Creating Movement wallet for user:', user);
       
       // Create Movement wallet using API
-      const movementWallet = await createMovementWallet(user);
+      const movementWallet = await createMovementWallet(user, createWallet);
       console.log('Movement wallet ready:', movementWallet);
       
       setOpen(false);

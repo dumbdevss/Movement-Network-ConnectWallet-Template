@@ -16,22 +16,6 @@ export function useMovementWallet() {
   const { user, authenticated } = usePrivy();
   const { signAndSubmitTransaction } = useSignAndSubmitTransaction();
 
-  /**
-   * Create a new Movement wallet
-   */
-  const createWallet = async () => {
-    try {
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      const wallet = await createMovementWallet(user);
-      console.log('New wallet created:', wallet);
-      return wallet;
-    } catch (error) {
-      console.error('Failed to create wallet:', error);
-      throw error;
-    }
-  };
 
   /**
    * Send APT tokens to another address
@@ -92,7 +76,6 @@ export function useMovementWallet() {
   };
 
   return {
-    createWallet,
     sendTransaction,
     checkBalance,
     getAccount,
@@ -123,7 +106,7 @@ export function MovementWalletExample() {
   const [transactionResult, setTransactionResult] = useState<string | null>(null);
 
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
+    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
   );
 
   const handleSendTransaction = async (publicKey: string, walletAddress: string, recipientAddress: string) => {
