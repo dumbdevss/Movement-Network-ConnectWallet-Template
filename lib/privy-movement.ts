@@ -13,14 +13,26 @@ import {
   useSignRawHash,
 } from "@privy-io/react-auth/extended-chains";
 
-// Environment variables
-const MOVEMENT_RPC_URL = process.env.NEXT_PUBLIC_MOVEMENT_RPC_URL || "https://full.mainnet.movementinfra.xyz/v1";
+  const MOVEMENT_CONFIGS = {
+    mainnet: {
+      chainId: 126,
+      name: "Movement Mainnet",
+      fullnode: "https://full.mainnet.movementinfra.xyz/v1",
+      explorer: "mainnet"
+    },
+    testnet: {
+      chainId: 250,
+      name: "Movement Testnet",
+      fullnode: "https://testnet.movementnetwork.xyz/v1",
+      explorer: "testnet"
+    }
+  };
 
 // Initialize Aptos client for Movement Mainnet
 const aptos = new Aptos(
   new AptosConfig({
     network: Network.CUSTOM,
-    fullnode: MOVEMENT_RPC_URL,
+    fullnode: MOVEMENT_CONFIGS.testnet.fullnode,
   })
 );
 
