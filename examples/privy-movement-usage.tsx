@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { 
   createMovementWallet, 
-  signAndSubmitTransaction, 
+  useSignAndSubmitTransaction, 
   getWalletBalance, 
   getAccountInfo 
 } from '../lib/privy-movement';
@@ -14,6 +14,7 @@ import {
 
 export function useMovementWallet() {
   const { user, authenticated } = usePrivy();
+  const { signAndSubmitTransaction } = useSignAndSubmitTransaction();
 
   /**
    * Create a new Movement wallet
@@ -36,7 +37,6 @@ export function useMovementWallet() {
    * Send APT tokens to another address
    */
   const sendTransaction = async (
-    walletId: string,
     publicKey: string,
     walletAddress: string,
     recipientAddress: string,
@@ -49,8 +49,6 @@ export function useMovementWallet() {
     try {
       // Use the updated client-side signing function
       const result = await signAndSubmitTransaction(
-        user, // Pass the Privy user object
-        walletId,
         publicKey,
         walletAddress,
         recipientAddress,
@@ -128,14 +126,18 @@ export function MovementWalletExample() {
     (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
   );
 
-  const handleSendTransaction = async (walletId: string, publicKey: string, walletAddress: string, recipientAddress: string) => {
+  const handleSendTransaction = async (publicKey: string, walletAddress: string, recipientAddress: string) => {
     const amount = 1000000; // 0.01 APT in Octas
+
+    console.log(publicKey)
+    console.log(walletAddress)
+    console.log(recipientAddress)
 
     setLoading(prev => ({ ...prev, transaction: true }));
     setTransactionResult(null);
 
     try {
-      const result = await sendTransaction(walletId, publicKey, walletAddress, recipientAddress, amount);
+      const result = await sendTransaction(publicKey, walletAddress, recipientAddress, amount);
       setTransactionResult(`Transaction sent successfully! Hash: ${result.hash}`);
     } catch (error) {
       setTransactionResult(`Failed to send transaction: ${error}`);
@@ -219,7 +221,7 @@ export function MovementWalletExample() {
             </button>
             
             <button 
-              onClick={() => handleSendTransaction(movementWallet?.id, movementWallet?.publicKey, movementWallet?.address, '0x1')}
+              onClick={() => handleSendTransaction(movementWallet?.publicKey, movementWallet?.address, '0x1')}
               disabled={loading.transaction}
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
             >

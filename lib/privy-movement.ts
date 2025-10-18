@@ -9,6 +9,10 @@ import {
   generateSigningMessageForTransaction,
 } from "@aptos-labs/ts-sdk";
 import { toHex } from "viem";
+import {
+  useCreateWallet,
+  useSignRawHash,
+} from "@privy-io/react-auth/extended-chains";
 
 // Environment variables
 const MOVEMENT_RPC_URL = process.env.NEXT_PUBLIC_MOVEMENT_RPC_URL || "https://full.mainnet.movementinfra.xyz/v1";
@@ -98,107 +102,123 @@ export async function createMovementWallet(privyUser: any) {
 }
 
 /**
- * Sign and submit a transaction on Movement Network using Privy client-side
+ * Hook to sign and submit transactions on Movement Network using Privy
+ * This hook should be used within a React component
  */
-export async function signAndSubmitTransaction(
-  privyUser: any, // Privy user object
-  walletId: string,
-  publicKey: string, // 32-byte ed25519 public key hex
-  walletAddress: string,
-  recipientAddress: string,
-  amount: number // amount in Octas
-) {
-  try {
-    const address = AccountAddress.from(walletAddress);
+export function useSignAndSubmitTransaction() {
+  const { signHash } = useSignWithPrivy();
 
-    // Build the raw transaction
-    const rawTxn = await aptos.transaction.build.simple({
-      sender: address,
-      data: {
-        function: "0x1::coin::transfer",
-        typeArguments: ["0x1::aptos_coin::AptosCoin"],
-        functionArguments: [
-          recipientAddress,
-          amount,
-        ],
-      },
-    });
+  const signAndSubmitTransaction = async (
+    publicKey: string, // 32-byte ed25519 public key hex
+    walletAddress: string,
+    recipientAddress: string,
+    amount: number // amount in Octas
+  ) => {
+    try {
+      const address = AccountAddress.from(walletAddress);
 
-    // Generate signing message
-    const message = generateSigningMessageForTransaction(rawTxn);
-    const hashToSign = toHex(message);
+      // Build the raw transaction
+      const rawTxn = await aptos.transaction.build.simple({
+        sender: address,
+        data: {
+          function: "0x1::coin::transfer",
+          typeArguments: ["0x1::aptos_coin::AptosCoin"],
+          functionArguments: [
+            recipientAddress,
+            amount,
+          ],
+        },
+      });
 
-    console.log('Hash to sign:', hashToSign);
-    
-    // Sign with Privy using raw sign API
-    const signatureResponse = await signWithPrivy(walletId, hashToSign);
-    console.log('Signature response:', signatureResponse);
-    
-    if (!signatureResponse.data?.signature) {
-      throw new Error('Failed to get signature from Privy');
+      // Generate signing message
+      const message = generateSigningMessageForTransaction(rawTxn);
+      
+      // Sign with Privy using the hook
+      const signatureResponse = await signHash(walletAddress, message);
+      console.log('Signature response:', signatureResponse);
+      
+      if (!signatureResponse.data?.signature) {
+        throw new Error('Failed to get signature from Privy');
+      }
+
+      console.log('Original publicKey:', publicKey)
+      
+      // Process the public key to ensure it's in the correct format
+      let processedPublicKey = publicKey as string;
+      
+      // Remove 0x prefix if present
+      if (processedPublicKey.toLowerCase().startsWith('0x')) {
+        processedPublicKey = processedPublicKey.slice(2);
+      }
+      
+      // Remove leading zeros if present (sometimes keys have 00 prefix)
+      if (processedPublicKey.length === 66 && processedPublicKey.startsWith('00')) {
+        processedPublicKey = processedPublicKey.substring(2);
+      }
+      
+      // Ensure we have exactly 64 characters (32 bytes in hex)
+      if (processedPublicKey.length !== 64) {
+        throw new Error(`Invalid public key length: expected 64 characters, got ${processedPublicKey.length}. Key: ${processedPublicKey}`);
+      }
+      
+      console.log('Processed publicKey:', processedPublicKey);
+      
+      // Create authenticator
+      const senderAuthenticator = new AccountAuthenticatorEd25519(
+        new Ed25519PublicKey(processedPublicKey),
+        new Ed25519Signature(signatureResponse.data.signature)
+      );
+
+      // Submit transaction
+      const pending = await aptos.transaction.submit.simple({
+        transaction: rawTxn,
+        senderAuthenticator,
+      });
+
+      // Wait for transaction confirmation
+      const executed = await aptos.waitForTransaction({
+        transactionHash: pending.hash,
+      });
+
+      console.log("Transaction executed:", executed.hash);
+      return executed;
+    } catch (error) {
+      console.error('Error signing and submitting transaction:', error);
+      throw error;
     }
+  };
 
-    // Create authenticator
-    const senderAuthenticator = new AccountAuthenticatorEd25519(
-      new Ed25519PublicKey(publicKey),
-      new Ed25519Signature(signatureResponse.data.signature)
-    );
-
-    // Submit transaction
-    const pending = await aptos.transaction.submit.simple({
-      transaction: rawTxn,
-      senderAuthenticator,
-    });
-
-    // Wait for transaction confirmation
-    const executed = await aptos.waitForTransaction({
-      transactionHash: pending.hash,
-    });
-
-    console.log("Transaction executed:", executed.hash);
-    return executed;
-  } catch (error) {
-    console.error('Error signing and submitting transaction:', error);
-    throw error;
-  }
+  return { signAndSubmitTransaction };
 }
 
 /**
- * Sign a hash using Privy's raw sign API (client-side)
+ * Hook to sign transactions using Privy
+ * This hook should be used within a React component
  */
-export async function signWithPrivy(walletId: string, hash: string) {
-  const url = `https://api.privy.io/v1/wallets/${walletId}/raw_sign`;
+export function useSignWithPrivy() {
+  const { signRawHash } = useSignRawHash();
 
-  const auth_token = btoa(`${process.env.NEXT_PUBLIC_PRIVY_APP_ID}:${process.env.NEXT_PUBLIC_SECRET}`);
-  
-  const options = {
-    method: 'POST',
-    headers: {
-      'privy-app-id': process.env.NEXT_PUBLIC_PRIVY_APP_ID || '',
-      'Authorization': `Basic ${auth_token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      params: {
-        "hash": hash
-      }
-    })
+  const signHash = async (walletAddress: string, hash: any) => {
+    try {
+      const { signature: rawSignature } = await signRawHash({
+        address: walletAddress,
+        chainType: "movement",
+        hash: toHex(hash),
+      });
+
+      console.log('Signature received:', rawSignature);
+      return {
+        data: {
+          signature: rawSignature
+        }
+      };
+    } catch (error) {
+      console.error('Error signing with Privy:', error);
+      throw error;
+    }
   };
 
-  try {
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      throw new Error(`Privy API error: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('Signature received:', data);
-    return data;
-  } catch (error) {
-    console.error('Error signing with Privy:', error);
-    throw error;
-  }
+  return { signHash };
 }
 
 /**
