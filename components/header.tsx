@@ -22,7 +22,7 @@ export function Header() {
 
   // Check for Movement wallet
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
+    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
   );
 
   const handleCopyAddress = async () => {

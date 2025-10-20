@@ -46,11 +46,10 @@ export async function createMovementWallet(privyUser: any, createWallet: any) {
   try {
     // First check if user already has a Movement wallet
     const existingWallet = privyUser.linkedAccounts?.find(
-      (account: any) => account.type === 'wallet' && account.chainType === 'movement'
+      (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
     );
     
     if (existingWallet) {
-      console.log('User already has a Movement wallet:', existingWallet);
       return {
         id: existingWallet.id,
         address: existingWallet.address,
@@ -59,12 +58,9 @@ export async function createMovementWallet(privyUser: any, createWallet: any) {
       };
     }
 
-    console.log('Creating Movement wallet for user:', privyUser.id);
     const wallet = await createWallet({
-      chainType: 'movement',
+      chainType: 'aptos',
     });
-    
-    console.log('Movement wallet created successfully:', wallet);
     
     return wallet;
   } catch (error) {
@@ -107,14 +103,11 @@ export function useSignAndSubmitTransaction() {
       
       // Sign with Privy using the hook
       const signatureResponse = await signHash(walletAddress, message);
-      console.log('Signature response:', signatureResponse);
       
       if (!signatureResponse.data?.signature) {
         throw new Error('Failed to get signature from Privy');
       }
 
-      console.log('Original publicKey:', publicKey)
-      
       // Process the public key to ensure it's in the correct format
       let processedPublicKey = publicKey as string;
       
@@ -133,8 +126,6 @@ export function useSignAndSubmitTransaction() {
         throw new Error(`Invalid public key length: expected 64 characters, got ${processedPublicKey.length}. Key: ${processedPublicKey}`);
       }
       
-      console.log('Processed publicKey:', processedPublicKey);
-      
       // Create authenticator
       const senderAuthenticator = new AccountAuthenticatorEd25519(
         new Ed25519PublicKey(processedPublicKey),
@@ -152,10 +143,8 @@ export function useSignAndSubmitTransaction() {
         transactionHash: pending.hash,
       });
 
-      console.log("Transaction executed:", executed.hash);
       return executed;
     } catch (error) {
-      console.error('Error signing and submitting transaction:', error);
       throw error;
     }
   };
@@ -172,16 +161,12 @@ export function useSignWithPrivy() {
 
   const signHash = async (walletAddress: string, hash: any) => {
 
-    console.log('Signing hash:', hash);
-    console.log('Wallet address:', walletAddress);
-
     try {
       const { signature: rawSignature } = await signRawHash({
         address: walletAddress,
-        chainType: "movement",
+        chainType: "aptos",
         hash: toHex(hash),
       });
-      console.log('Signature received:', rawSignature);
       return {
         data: {
           signature: rawSignature

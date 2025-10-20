@@ -39,10 +39,8 @@ export function useMovementWallet() {
         amount
       );
       
-      console.log('Transaction successful:', result);
       return result;
     } catch (error) {
-      console.error('Transaction failed:', error);
       throw error;
     }
   };
@@ -53,10 +51,8 @@ export function useMovementWallet() {
   const checkBalance = async (walletAddress: string) => {
     try {
       const balance = await getWalletBalance(walletAddress);
-      console.log('Wallet balance:', balance);
       return balance;
     } catch (error) {
-      console.error('Failed to get balance:', error);
       throw error;
     }
   };
@@ -106,15 +102,11 @@ export function MovementWalletExample() {
   const [transactionResult, setTransactionResult] = useState<string | null>(null);
 
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
+    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
   );
 
   const handleSendTransaction = async (publicKey: string, walletAddress: string, recipientAddress: string) => {
     const amount = 1000000; // 0.01 APT in Octas
-
-    console.log(publicKey)
-    console.log(walletAddress)
-    console.log(recipientAddress)
 
     setLoading(prev => ({ ...prev, transaction: true }));
     setTransactionResult(null);
@@ -160,7 +152,6 @@ export function MovementWalletExample() {
     try {
       const info = await getAccount(movementWallet.address);
       setAccountInfo(info);
-      console.log('Full account info:', info);
     } catch (error) {
       setAccountInfo(null);
       console.error('Failed to get account info:', error);
@@ -168,8 +159,6 @@ export function MovementWalletExample() {
       setLoading(prev => ({ ...prev, account: false }));
     }
   };
-
-  console.log('Movement wallet:', movementWallet);
 
   return (
     <div className="p-4 space-y-4">

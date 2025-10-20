@@ -31,7 +31,7 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
 
   // Check for Movement wallet
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
+    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
   );
 
   // Filter out unwanted wallets, remove duplicates, and sort with Nightly first
@@ -93,12 +93,10 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
 
   const handleWalletCreation = async (user: any) => {
     try {
-      setIsCreatingWallet(true);
-      console.log('Creating Movement wallet for user:', user);
+      setIsCreatingWallet(true)
       
       // Create Movement wallet using API
       const movementWallet = await createMovementWallet(user, createWallet);
-      console.log('Movement wallet ready:', movementWallet);
       
       setOpen(false);
       return movementWallet;
@@ -111,11 +109,6 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
 
   const { login } = useLogin({
     onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount }) => {
-      console.log('User logged in successfully:', user);
-      console.log('Is new user:', isNewUser);
-      console.log('Was already authenticated:', wasAlreadyAuthenticated);
-      console.log('Login method:', loginMethod);
-      console.log('Login account:', loginAccount);
       
       try {
         // Create wallet after successful login
@@ -136,7 +129,6 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
       setIsCreatingWallet(true);
       
       if (!authenticated) {
-        // Login with Privy - wallet creation will happen in onComplete callback
         await login({ 
           loginMethods: ['email', 'twitter', 'google', 'github', 'discord'], 
           prefill: { type: 'email', value: '' }, 
@@ -185,7 +177,7 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
               variant="default"
               className="w-full justify-center h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
               onClick={handlePrivyLogin}
-              disabled={isCreatingWallet || !ready}
+              disabled={isCreatingWallet || authenticated}
             >
               {isCreatingWallet ? (
                 <div className="flex items-center space-x-2">

@@ -35,17 +35,15 @@ export default function PrivyLogin({ isOpen, onClose, onSuccess }: PrivyLoginPro
 
   // Check for Movement wallet
   const movementWallet: any = user?.linkedAccounts?.find(
-    (account: any) => account.type === 'wallet' && account.chainType === 'movement'
+    (account: any) => account.type === 'wallet' && account.chainType === 'aptos'
   );
 
   const handleWalletCreation = async (user: any) => {
     try {
       setIsCreatingWallet(true);
-      console.log('Creating Movement wallet for user:', user);
 
       // Create Movement wallet using API
       const movementWallet = await createMovementWallet(user, createWallet);
-      console.log('Movement wallet ready:', movementWallet);
 
       return movementWallet;
     } catch (error) {
@@ -58,11 +56,6 @@ export default function PrivyLogin({ isOpen, onClose, onSuccess }: PrivyLoginPro
 
   const { login } = useLogin({
     onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount }) => {
-      console.log('User logged in successfully:', user);
-      console.log('Is new user:', isNewUser);
-      console.log('Was already authenticated:', wasAlreadyAuthenticated);
-      console.log('Login method:', loginMethod);
-      console.log('Login account:', loginAccount);
 
       try {
         setIsCreatingWallet(true);
