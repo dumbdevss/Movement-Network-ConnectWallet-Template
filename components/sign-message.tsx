@@ -40,7 +40,7 @@ export function SignMessage() {
         id: loadingToast,
       });
 
-      const response = await signMessage({
+      const response: any = await signMessage({
         message,
         nonce: Date.now().toString(),
       });

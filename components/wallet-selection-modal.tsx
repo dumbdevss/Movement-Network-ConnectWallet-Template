@@ -49,7 +49,7 @@ export function WalletSelectionModal({ children }: WalletSelectionModalProps) {
         
         if (selectedWallet?.features?.['aptos:connect']) {
           // Use wallet-standard aptos:connect feature with network info
-          const networkInfo = {
+          const networkInfo: any = {
             chainId: 126, // Movement Mainnet
             name: "custom" as const,
             url: "https://full.mainnet.movementinfra.xyz/v1"
